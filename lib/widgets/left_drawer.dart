@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/material.dart';
 import 'package:football_shop/screens/menu.dart';
 import 'package:football_shop/screens/productlist_form.dart';
+import 'package:football_shop/screens/product_entry_list.dart';
 
 class LeftDrawer extends StatelessWidget {
   const LeftDrawer({super.key});
@@ -12,9 +13,7 @@ class LeftDrawer extends StatelessWidget {
       child: ListView(
         children: [
           const DrawerHeader(
-            decoration: BoxDecoration(
-            color: Color(0xFF0D1B2A),
-            ),
+            decoration: BoxDecoration(color: Color(0xFF203A52)),
             child: Column(
               children: [
                 Text(
@@ -45,27 +44,37 @@ class LeftDrawer extends StatelessWidget {
             // Redirect to MyHomePage
             onTap: () {
               Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => MyHomePage(),
-                  ));
+                context,
+                MaterialPageRoute(builder: (context) => MyHomePage()),
+              );
             },
           ),
           ListTile(
             leading: const Icon(Icons.post_add),
             title: const Text('Add Product'),
-            // Redirect to NewsFormPage
+            // Redirect to ProductFormPage
             onTap: () {
               Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ProductFormPage(),
-                  ));
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ProductFormPage(),
+                ),
+              );
             },
           ),
-          
-          // TODO: Create another ListTile for the products list page
-          // We don't have the Products list page at the moment so it might be implement in the next tuto
+          ListTile(
+            leading: const Icon(Icons.add_reaction_rounded),
+            title: const Text('Product List'),
+            onTap: () {
+              // Route to product list page
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const productEntryListPage(),
+                ),
+              );
+            },
+          ),
         ],
       ),
     );

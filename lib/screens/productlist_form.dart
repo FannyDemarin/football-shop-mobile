@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:football_shop/widgets/left_drawer.dart';
 import 'package:flutter/services.dart';
+import 'dart:convert';
+import 'package:provider/provider.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:football_shop/screens/menu.dart';
 
 class ProductFormPage extends StatefulWidget {
   const ProductFormPage({super.key});
@@ -20,19 +24,15 @@ class _ProductFormPageState extends State<ProductFormPage> {
   String _brand = "";
   int _releaseYear = 2024;
 
-  final List<String> _categories = [
-    't-shirt',
-    'ball',
-    'scarf',
-    'tracksuit',
-  ];
+  final List<String> _categories = ['t-shirt', 'ball', 'scarf', 'tracksuit'];
 
   @override
   Widget build(BuildContext context) {
+    final request = context.watch<CookieRequest>();
     return Scaffold(
       appBar: AppBar(
         title: const Center(child: Text('Add Product Form')),
-        backgroundColor: Color(0xFF0D1B2A),
+        backgroundColor: Color(0xFF203A52),
         foregroundColor: Colors.white,
       ),
       drawer: const LeftDrawer(),
@@ -92,13 +92,15 @@ class _ProductFormPageState extends State<ProductFormPage> {
 
               // === Price ===
               TextFormField(
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
                 ],
                 decoration: InputDecoration(
                   hintText: "Product Price",
-                  labelText: "Price (\IDR)",
+                  labelText: "Price (\€)",
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(5.0),
                   ),
@@ -151,8 +153,11 @@ class _ProductFormPageState extends State<ProductFormPage> {
               TextFormField(
                 keyboardType: TextInputType.number,
                 inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly, // autorise uniquement les chiffres
-                  LengthLimitingTextInputFormatter(4),    // limite à 4 caractères max
+                  FilteringTextInputFormatter
+                      .digitsOnly, // autorise uniquement les chiffres
+                  LengthLimitingTextInputFormatter(
+                    4,
+                  ), // limite à 4 caractères max
                 ],
                 decoration: InputDecoration(
                   hintText: "Release Year (e.g. 2024)",
@@ -228,55 +233,50 @@ class _ProductFormPageState extends State<ProductFormPage> {
               Center(
                 child: ElevatedButton(
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all(Color(0xFF0D1B2A)),
+                    backgroundColor: MaterialStateProperty.all(
+                      Color(0xFF0D1B2A),
+                    ),
                   ),
-                  onPressed: () {
-  if (_formKey.currentState!.validate()) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Product saved successfully!'),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Name: $_name'),
-                Text('Description: $_description'),
-                Text('Price: IDR ${_price.toStringAsFixed(2)}'),
-                Text('Brand: $_brand'),
-                Text('Release Year: $_releaseYear'),
-                Text('Category: $_category'),
-                Text('Thumbnail: $_thumbnail'),
-                Text('Featured: ${_isFeatured ? "Yes" : "No"}'),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              child: const Text('OK'),
-                onPressed: () {
-                  Navigator.pop(context);
-                  setState(() {
-                      // reset après avoir fermé le popup
-                      _formKey.currentState!.reset();
-                      _name = "";
-                      _description = "";
-                      _price = 0;
-                      _brand = "";
-                      _releaseYear = 2024;
-                      _category = "t-shirt";
-                      _thumbnail = "";
-                      _isFeatured = false;
-                      });
-                    },
-                  ),
-                ],
-              );
-            },
-          );
-        }
-      },
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+                      final response = await request.postJson(
+                        "http://localhost:8000/create-flutter/",
+                        jsonEncode({
+                          "name": _name,
+                          "description": _description,
+                          "thumbnail": _thumbnail,
+                          "category": _category,
+                          "is_featured": _isFeatured,
+                          "price": _price,
+                          "brand": _brand,
+                          "release_year": _releaseYear,
+                        }),
+                      );
+                      if (context.mounted) {
+                        if (response['status'] == 'success') {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Product successfully saved!"),
+                            ),
+                          );
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MyHomePage(),
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                "Something went wrong, please try again.",
+                              ),
+                            ),
+                          );
+                        }
+                      }
+                    }
+                  },
 
                   child: const Text(
                     "Save",
